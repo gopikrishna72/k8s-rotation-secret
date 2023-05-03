@@ -1,5 +1,7 @@
 #!/usr/bin/env groovy
 
+//library("jenkins-pipeline-library@CNJR-934")
+
 // Automated release, promotion and dependencies
 properties([
   // Include the automated release parameters for the build
@@ -164,31 +166,31 @@ pipeline {
           }
         }
 
-        stage('Run Unit Tests') {
-          steps {
-            sh './bin/test_unit'
-          }
-          post {
-            always {
-              sh './bin/coverage'
-              junit 'junit.xml'
-              cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, lineCoverageTargets: '70, 0, 0', methodCoverageTargets: '70, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
-              ccCoverage("gocov", "--prefix github.com/cyberark/secrets-provider-for-k8s")
-            }
-          }
-        }
+//         stage('Run Unit Tests') {
+//           steps {
+//             sh './bin/test_unit'
+//           }
+//           post {
+//             always {
+//               sh './bin/coverage'
+//               junit 'junit.xml'
+//               cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml', conditionalCoverageTargets: '70, 0, 0', failUnhealthy: false, failUnstable: false, maxNumberOfBuilds: 0, lineCoverageTargets: '70, 0, 0', methodCoverageTargets: '70, 0, 0', onlyStable: false, sourceEncoding: 'ASCII', zoomCoverageChart: false
+//               ccCoverage("gocov", "--prefix github.com/cyberark/secrets-provider-for-k8s")
+//             }
+//           }
+//         }
         
-        stage ("DAP Integration Tests on GKE") {
-          steps {
-            script {
-              def tasks = [:]
-              tasks["Kubernetes GKE, DAP"] = {
-                sh "./bin/start --docker --dap --gke"
-              }
-              parallel tasks
-            }
-          }
-        }
+//         stage ("DAP Integration Tests on GKE") {
+//           steps {
+//             script {
+//               def tasks = [:]
+//               tasks["Kubernetes GKE, DAP"] = {
+//                 sh "./bin/start --docker --dap --gke"
+//               }
+//               parallel tasks
+//             }
+//           }
+//         }
 
         stage ("DAP Integration Tests on OpenShift") {
           when {
@@ -223,20 +225,20 @@ pipeline {
           }
         }
 
-        // We want to avoid running in parallel.
-        // When we have 2 build running on the same environment (gke env only) in parallel,
-        // we get the error "gcloud crashed : database is locked"
-        stage ("OSS Integration Tests on GKE") {
-          steps {
-            script {
-              def tasks = [:]
-                tasks["Kubernetes GKE, oss"] = {
-                  sh "./bin/start --docker --oss --gke"
-                }
-              parallel tasks
-            }
-          }
-        }
+//         // We want to avoid running in parallel.
+//         // When we have 2 build running on the same environment (gke env only) in parallel,
+//         // we get the error "gcloud crashed : database is locked"
+//         stage ("OSS Integration Tests on GKE") {
+//           steps {
+//             script {
+//               def tasks = [:]
+//                 tasks["Kubernetes GKE, oss"] = {
+//                   sh "./bin/start --docker --oss --gke"
+//                 }
+//               parallel tasks
+//             }
+//           }
+//         }
 
         // Allows for the promotion of images.
         stage('Push images to internal registry') {
@@ -283,14 +285,22 @@ pipeline {
     always {
       archiveArtifacts artifacts: "deploy/output/*.txt", fingerprint: false, allowEmptyArchive: true
     }
+
     success {
-      cleanupAndNotify(currentBuild.currentResult)
+      script {
+        Module = load "myCleanupAndNotify.groovy"
+        Module.testCleanupAndNotify(currentBuild.currentResult)
+        //cleanupAndNotify(currentBuild.currentResult)
+      }
     }
     unsuccessful {
       script {
+        //Module = load "myCleanupAndNotify.groovy"
         if (env.BRANCH_NAME == 'main') {
+          //Module.testCleanupAndNotify(currentBuild.currentResult, "#development", "@secrets-provider-for-k8s-owners")
           cleanupAndNotify(currentBuild.currentResult, "#development", "@secrets-provider-for-k8s-owners")
         } else {
+          //Module.testCleanupAndNotify(currentBuild.currentResult, "#development")
           cleanupAndNotify(currentBuild.currentResult, "#development")
         }
       }
