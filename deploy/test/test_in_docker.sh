@@ -45,6 +45,7 @@ deployConjur() {
   if [ $CONJUR_DEPLOYMENT = "oss" ]; then
       cmd="$cmd --oss"
   fi
+  runDockerCommand "apt-get update && apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin"
   runDockerCommand "cd ./kubernetes-conjur-deploy-$UNIQUE_TEST_ID && DEBUG=true $cmd"
 }
 
