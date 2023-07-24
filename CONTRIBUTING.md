@@ -98,6 +98,12 @@ You can also view Conjur Enterprise / Conjur Open Source pod logs by running `ku
 
 1. If a cluster is already locally deployed run `./bin/start --dev --reload` to build your local changes and redeploy them to the local Secrets Provider K8s cluster
 
+#### Run e2e tests against local development environment
+
+Assuming you have a running local cluster per the previous section and a valid kubeconfig, you can run the Golang-based e2e tests by simply running `./bin/test_e2e` from the project root folder. This will build a test container with the kubeconfig mounted, and execute the tests against the local cluster.
+
+NOTE: This assumes that the cluster is running with the default values in `bootstrap.env` for local DEV clusters.
+
 #### Clean-up
 
 To remove K8s resources from your local environment perform the following:
